@@ -1,0 +1,18 @@
+升级JDK9后eclipse无法启动解决方法
+
+升级JDK9后eclipse无法启动，提示：an error has occurred.see the log file
+
+解决方法如下
+
+工具/原料
+已经升级jdk9
+eclipse启动时提示an error has occurred.see the log file
+找到eclipse安装目录
+方法/步骤
+1
+用记事本打开eclipse安装目录下的eclipse.ini
+2
+在最后添加：
+--add-modules=ALL-SYSTEM
+3
+再次启动eclipse即可
