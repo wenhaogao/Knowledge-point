@@ -1,8 +1,0 @@
-1.help->register,倒数第三个选项
-2.打开 http://idea.lanyus.com/ 获取破解码
-3.修改hosts 文件,host文件一般在 文件夹 C:\Windows\System32\drivers\etc 
-
-在hosts文件中添加 0.0.0.0 account.jetbrains.com   添加到最后面
-
--javaagent:D:\Program Files\JetBrains\IntelliJ IDEA 2017.3.2\bin\JetbrainsCrack-2.6.10-release-enc.jar
--javaagent:D:\Program Files\IDEA\IntelliJ IDEA 2017.3.2\bin\JetbrainsCrack-2.6.10-release-enc.jar
