@@ -20,11 +20,14 @@
 　　该函数准许进程指示内核等待多个事件中的任何一个发送，并只在有一个或多个事件发生或经历一段指定的时间后才唤醒。函数原型如下：
 
 
-复制代码
+
+```
 #include <sys/select.h>
 #include <sys/time.h>
 
 int select(int maxfdp1,fd_set *readset,fd_set *writeset,fd_set *exceptset,const struct timeval *timeout)
+```
+
 返回值：就绪描述符的数目，超时返回0，出错返回-1
 
 复制代码
@@ -72,37 +75,61 @@ int select(int maxfdp1,fd_set *readset,fd_set *writeset,fd_set *exceptset,const 
 
 　　epoll操作过程需要三个接口，分别如下：
 
+
+```
 #include <sys/epoll.h>
 int epoll_create(int size);
 int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
 int epoll_wait(int epfd, struct epoll_event * events, int maxevents, int timeout);
+```
+
 
 （1） int epoll_create(int size);
+
 　　创建一个epoll的句柄，size用来告诉内核这个监听的数目一共有多大。这个参数不同于select()中的第一个参数，给出最大监听的fd+1的值。需要注意的是，当创建好epoll句柄后，它就是会占用一个fd值，在linux下如果查看/proc/进程id/fd/，是能够看到这个fd的，所以在使用完epoll后，必须调用close()关闭，否则可能导致fd被耗尽。
 
 （2）int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
+
 　　epoll的事件注册函数，它不同与select()是在监听事件时告诉内核要监听什么类型的事件epoll的事件注册函数，它不同与select()是在监听事件时告诉内核要监听什么类型的事件，而是在这里先注册要监听的事件类型。第一个参数是epoll_create()的返回值，第二个参数表示动作，用三个宏来表示：
+　　
+　
 EPOLL_CTL_ADD：注册新的fd到epfd中；
 EPOLL_CTL_MOD：修改已经注册的fd的监听事件；
 EPOLL_CTL_DEL：从epfd中删除一个fd；
-第三个参数是需要监听的fd，第四个参数是告诉内核需要监听什么事，struct epoll_event结构如下：
+第三个参数是需要监听的fd，第四个参数是告诉内核需要监听什么事，struct
+
+epoll_event结构如下：
 
 
+
+```
 struct epoll_event {
   __uint32_t events;  /* Epoll events */
   epoll_data_t data;  /* User data variable */
 };
+```
+
 
 events可以是以下几个宏的集合：
+
 EPOLLIN ：表示对应的文件描述符可以读（包括对端SOCKET正常关闭）；
+
 EPOLLOUT：表示对应的文件描述符可以写；
+
 EPOLLPRI：表示对应的文件描述符有紧急的数据可读（这里应该表示有带外数据到来）；
+
 EPOLLERR：表示对应的文件描述符发生错误；
+
 EPOLLHUP：表示对应的文件描述符被挂断；
+
 EPOLLET： 将EPOLL设为边缘触发(Edge Triggered)模式，这是相对于水平触发(Level Triggered)来说的。
+
 EPOLLONESHOT：只监听一次事件，当监听完这次事件之后，如果还需要继续监听这个socket的话，需要再次把这个socket加入到EPOLL队列里
 
+```
 （3） int epoll_wait(int epfd, struct epoll_event * events, int maxevents, int timeout);
+```
+
 　　等待事件的产生，类似于select()调用。参数events用来从内核得到事件的集合，maxevents告之内核这个events有多大，这个maxevents的值不能大于创建epoll_create()时的size，参数timeout是超时时间（毫秒，0会立即返回，-1将不确定，也有说法说是永久阻塞）。该函数返回需要处理的事件数目，如返回0表示已超时。
 
 3、工作模式
@@ -126,6 +153,7 @@ EPOLLONESHOT：只监听一次事件，当监听完这次事件之后，如果�
 
 　　函数格式如下所示：
 
+```
 # include <poll.h>
 int poll ( struct pollfd * fds, unsigned int nfds, int timeout);
 
@@ -136,7 +164,9 @@ struct pollfd {
 int fd;         /* 文件描述符 */
 short events;         /* 等待的事件 */
 short revents;       /* 实际发生了的事件 */
-} ; 
+} ;
+```
+
 
 　　每一个pollfd结构体指定了一个被监视的文件描述符，可以传递多个结构体，指示poll()监视多个文件描述符。每个结构体的events域是监视该文件描述符的事件掩码，由用户来设置这个域。revents域是文件描述符的操作结果事件掩码，内核在调用返回时设置这个域。events域中请求的任何事件都可能在revents域中返回。合法的事件如下：
 
@@ -166,7 +196,19 @@ short revents;       /* 实际发生了的事件 */
 这些事件在events域中无意义，因为它们在合适的时候总是会从revents中返回。
 
 　　使用poll()和select()不一样，你不需要显式地请求异常情况报告。
-　　POLLIN | POLLPRI等价于select()的读事件，POLLOUT |POLLWRBAND等价于select()的写事件。POLLIN等价于POLLRDNORM |POLLRDBAND，而POLLOUT则等价于POLLWRNORM。例如，要同时监视一个文件描述符是否可读和可写，我们可以设置 events为POLLIN |POLLOUT。在poll返回时，我们可以检查revents中的标志，对应于文件描述符请求的events结构体。如果POLLIN事件被设置，则文件描述符可以被读取而不阻塞。如果POLLOUT被设置，则文件描述符可以写入而不导致阻塞。这些标志并不是互斥的：它们可能被同时设置，表示这个文件描述符的读取和写入操作都会正常返回而不阻塞。
+　　
+　　
+　　
+　　
+　　
+　　
+　　
+　　POLLIN |POLLPRI等价于select()的读事件，POLLOUT|POLLWRBAND等价于select()的写事件。POLLIN等价于POLLRDNORM|POLLRDBAND，而POLLOUT则等价于POLLWRNORM。
+　　
+　　
+　　
+　　
+例如，要同时监视一个文件描述符是否可读和可写，我们可以设置 events为POLLIN |POLLOUT。在poll返回时，我们可以检查revents中的标志，对应于文件描述符请求的events结构体。如果POLLIN事件被设置，则文件描述符可以被读取而不阻塞。如果POLLOUT被设置，则文件描述符可以写入而不导致阻塞。这些标志并不是互斥的：它们可能被同时设置，表示这个文件描述符的读取和写入操作都会正常返回而不阻塞。
 
 　　timeout参数指定等待的毫秒数，无论I/O是否准备好，poll都会返回。timeout指定为负数值表示无限超时，使poll()一直挂起直到一个指定事件发生；timeout为0指示poll调用立即返回并列出准备好I/O的文件描述符，但并不等待其它的事件。这种情况下，poll()就像它的名字那样，一旦选举出来，立即返回。
 
