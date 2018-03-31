@@ -52,7 +52,7 @@ Hashtable效率低的原因是所有访问Hashtable的线程都争夺一把锁�
 ##### 那么ConcurrentHashMap里为什么分segment呢？
 这也是ConcurrentHashMap高明之处，我们都知道锁只在segment中存在，这样就把锁的粒度变小，提高并发，同时还是线程安全的，
 ConcurrentHashMap的结构图：
-https://github.com/wenhaogao/Knowledge-point/blob/dev/image/%E5%9B%BE%E7%89%871.png
+![image](https://github.com/wenhaogao/Knowledge-point/blob/dev/image/%E5%9B%BE%E7%89%871.png)
 * Segment是可重入锁，它在ConcurrentHashMap中扮演分离锁的角色；
 * HashEntry主要存储键值对；
 * ConcurrentHashMap包含一个Segment数组，每个Segment包含一个HashEntry数组并且守护它，当修改HashEntry数组数据时，需要先获取它对应的Segment锁；而HashEntry数组采用开链法处理冲突，所以它的每个HashEntry元素又是链表结构的元素。
